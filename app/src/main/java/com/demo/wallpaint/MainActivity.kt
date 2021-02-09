@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
 
     var touchCount = 0
     lateinit var tl: Point
+    var tPoints =  arrayOf<Point>(Point(0.0, 0.0),Point(0.0, 0.0),Point(0.0, 0.0),Point(0.0, 0.0))
     lateinit var bitmap: Bitmap
     var chosenColor = Color.RED
     private lateinit var imageFilePath: String
@@ -115,16 +116,29 @@ class MainActivity : AppCompatActivity() {
         imageFromData.setOnTouchListener(object : View.OnTouchListener {
             override fun onTouch(v: View, event: MotionEvent): Boolean {
                 if (event.action == MotionEvent.ACTION_DOWN) {
-                    if (touchCount == 0) {     tl.x = event.x.toDouble()
-                        tl.y = event.y.toDouble()
-                        if(texture) {
-                            applyTexture(bitmap, tl)
-                            showImage()
-                        }
-                        else {
-                            rpPaintHSV(bitmap,tl)
-                            showImage()
-                        }
+//                    if (touchCount == 0) {     tl.x = event.x.toDouble()
+//                        tl.y = event.y.toDouble()
+//                        if(texture) {
+//                            applyTexture(bitmap, tl)
+//                            showImage()
+//                        }
+//                        else {
+//                            rpPaintHSV(bitmap,tl)
+//                            showImage()
+//                        }
+//                    }
+                    if (touchCount < 4) {
+                        //Log.d(TAG, "onTouch: $touchCount")
+                        tPoints[touchCount] = Point(event.x.toDouble(), event.y.toDouble());
+                        rpPlotPoint(bitmap, tPoints[touchCount])
+                        if(touchCount > 0)
+                            rpPlotLine(bitmap,tPoints[touchCount-1],tPoints[touchCount])
+                        touchCount++
+
+                    }
+                    if(touchCount >= 4) {
+                        rpPaintHSV(bitmap,tl)
+//                      showImage()
                     }
                 }
                 return true
@@ -272,6 +286,28 @@ class MainActivity : AppCompatActivity() {
         showImage()
     }
 
+    private fun rpPlotPoint(bitmap: Bitmap, p: Point): Mat {
+        //Log.d(TAG, "rpPlotPoint: $p")
+        val  mRgbMat = Mat()
+        Utils.bitmapToMat(bitmap,mRgbMat)
+        Imgproc.circle(mRgbMat,p,5,Scalar(Color.red(chosenColor).toDouble(),Color.green(chosenColor).toDouble(),Color.blue(chosenColor).toDouble()))
+        Log.d(TAG, "rpPlotPoint: $mRgbMat")
+        showImage(mRgbMat,imageFromData)
+        imageFromData.visibility = View.VISIBLE
+        return mRgbMat
+    }
+    private fun rpPlotLine(bitmap: Bitmap, preP: Point, onP: Point): Mat {
+        //Log.d(TAG, "rpPlotPoint: $p")
+        val  mRgbMat = Mat()
+        Utils.bitmapToMat(bitmap,mRgbMat)
+        Imgproc.line(mRgbMat,preP,onP,
+            Scalar(Color.red(chosenColor).toDouble(),Color.green(chosenColor).toDouble(),Color.blue(chosenColor).toDouble()),5
+        )
+        Log.d(TAG, "rpPlotPoint: $mRgbMat")
+        showImage(mRgbMat,imageFromData)
+        imageFromData.visibility = View.VISIBLE
+        return mRgbMat
+    }
     private fun rpPaintHSV(bitmap: Bitmap, p: Point): Mat {
         val cannyMinThres = 30.0
         val ratio = 2.5
